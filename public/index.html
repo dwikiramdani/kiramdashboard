@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Dashboard - Admin Panel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="login-screen" class="screen">
+      <div class="login-container">
+        <h1>Portfolio Dashboard</h1>
+        <h2>Admin Login</h2>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+          <p id="login-error" class="error"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen hidden">
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h2>Admin Panel</h2>
+        </div>
+        <ul class="nav-menu">
+          <li class="nav-item active" data-section="profile">Profile</li>
+          <li class="nav-item" data-section="experiences">Experiences</li>
+          <li class="nav-item" data-section="projects">Projects</li>
+          <li class="nav-item" data-section="logout">Logout</li>
+        </ul>
+      </nav>
+
+      <main class="main-content">
+        <header class="header">
+          <h1 id="page-title">Profile Management</h1>
+          <button id="logout-btn" class="btn btn-secondary">Logout</button>
+        </header>
+
+        <div id="content-area">
+          <section id="profile-section" class="section">
+            <div class="card">
+              <h3>Profile Information</h3>
+              <form id="profile-form">
+                <div class="form-group">
+                  <label for="profile-picture">Profile Picture</label>
+                  <div class="image-upload">
+                    <img id="profile-preview" src="/uploads/default-avatar.png" alt="Profile Picture">
+                    <input type="file" id="profile-picture" accept="image/*">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('profile-picture').click()">Choose Image</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="headline">Headline</label>
+                  <input type="text" id="headline" placeholder="e.g., Full Stack Developer">
+                </div>
+                <div class="form-group">
+                  <label for="summary">Summary</label>
+                  <textarea id="summary" rows="4" placeholder="Brief description about yourself"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="techstack">Tech Stack (comma-separated)</label>
+                  <input type="text" id="techstack" placeholder="e.g., JavaScript, React, Node.js">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+              </form>
+            </div>
+          </section>
+
+          <section id="experiences-section" class="section hidden">
+            <div class="card">
+              <h3>Add Experience</h3>
+              <form id="experience-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="exp-title">Title</label>
+                    <input type="text" id="exp-title" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="exp-company">Company</label>
+                    <input type="text" id="exp-company" required>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="exp-start">Start Date</label>
+                    <input type="date" id="exp-start" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="exp-end">End Date</label>
+                    <input type="date" id="exp-end">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="exp-current">
+                    <input type="checkbox" id="exp-current">
+                    Currently Working Here
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label for="exp-description">Description</label>
+                  <textarea id="exp-description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Experience</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <h3>Work Experiences</h3>
+              <div id="experiences-list" class="list-container"></div>
+            </div>
+          </section>
+
+          <section id="projects-section" class="section hidden">
+            <div class="card">
+              <h3>Add Project</h3>
+              <form id="project-form">
+                <div class="form-group">
+                  <label for="proj-title">Project Title</label>
+                  <input type="text" id="proj-title" required>
+                </div>
+                <div class="form-group">
+                  <label for="proj-description">Description</label>
+                  <textarea id="proj-description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="proj-image">Project Image</label>
+                  <div class="image-upload">
+                    <img id="project-preview" src="/uploads/default-project.png" alt="Project Image">
+                    <input type="file" id="proj-image" accept="image/*">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('proj-image').click()">Choose Image</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="proj-technologies">Technologies (comma-separated)</label>
+                  <input type="text" id="proj-technologies" placeholder="e.g., React, Node.js, MongoDB">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="proj-link">Live Link</label>
+                    <input type="url" id="proj-link" placeholder="https://...">
+                  </div>
+                  <div class="form-group">
+                    <label for="proj-github">GitHub Link</label>
+                    <input type="url" id="proj-github" placeholder="https://github.com/...">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Project</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <h3>Projects</h3>
+              <div id="projects-list" class="list-container"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
