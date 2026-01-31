@@ -2,6 +2,7 @@ const API_URL = '/graphql';
 
 let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+let apiKey = localStorage.getItem('apiKey') || '';
 
 document.addEventListener('DOMContentLoaded', () => {
   if (authToken && currentUser) {
@@ -91,8 +92,10 @@ async function handleLogin(e) {
     if (response.ok) {
       authToken = data.token;
       currentUser = data.user;
+      apiKey = data.apiKey || '';
       localStorage.setItem('authToken', authToken);
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      localStorage.setItem('apiKey', apiKey);
       showDashboard();
     } else {
       errorEl.textContent = data.error || 'Login failed';
@@ -105,8 +108,10 @@ async function handleLogin(e) {
 function handleLogout() {
   authToken = null;
   currentUser = null;
+  apiKey = '';
   localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
+  localStorage.removeItem('apiKey');
   showLogin();
 }
 
@@ -296,10 +301,48 @@ async function loadProfile() {
     document.getElementById('headline').value = profile.headline || '';
     document.getElementById('summary').value = profile.summary || '';
     document.getElementById('techstack').value = (profile.techstack || []).join(', ');
+    
+    // Display API Key
+    const apiKeyDisplay = document.getElementById('api-key-display');
+    if (apiKey) {
+      apiKeyDisplay.innerHTML = `
+        <div class="api-key-section">
+          <label>Your API Key</label>
+          <div class="api-key-value">${apiKey}</div>
+          <p class="api-key-note">Use this key for external API requests with header: X-Api-Key: ${apiKey}</p>
+          <button class="btn btn-secondary btn-sm" onclick="regenerateApiKey()">Regenerate API Key</button>
+        </div>
+      `;
+    }
   } catch (error) {
     console.error('Error loading profile:', error);
   }
 }
+
+async function regenerateApiKey() {
+  if (!confirm('Are you sure you want to regenerate your API key? The old key will stop working immediately.')) return;
+  
+  const query = `
+    mutation RegenerateApiKey {
+      regenerateApiKey {
+        apiKey
+        message
+      }
+    }
+  `;
+  
+  try {
+    const result = await graphqlRequest(query);
+    apiKey = result.regenerateApiKey.apiKey;
+    localStorage.setItem('apiKey', apiKey);
+    loadProfile();
+    alert(result.regenerateApiKey.message);
+  } catch (error) {
+    alert('Error regenerating API key: ' + error.message);
+  }
+}
+
+window.regenerateApiKey = regenerateApiKey;
 
 async function loadExperiences() {
   const query = `

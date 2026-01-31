@@ -4,7 +4,6 @@ const schema = buildSchema(`
   type Profile {
     id: ID!
     username: String!
-    password: String!
     profilePicture: String!
     headline: String!
     summary: String!
@@ -34,6 +33,12 @@ const schema = buildSchema(`
   type AuthPayload {
     token: String!
     user: User!
+    apiKey: String
+  }
+
+  type ApiKeyResponse {
+    apiKey: String!
+    message: String!
   }
 
   type User {
@@ -51,6 +56,7 @@ const schema = buildSchema(`
 
   type Mutation {
     login(username: String!, password: String!): AuthPayload
+    regenerateApiKey: ApiKeyResponse
     updateProfile(
       profilePicture: String
       headline: String

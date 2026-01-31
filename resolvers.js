@@ -1,8 +1,8 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./database');
 
-const JWT_SECRET = 'kiram-dashboard-jwt-secret-key-2024';
+const JWT_SECRET = 'kiram-dashboard-jwt-secret-key-2024-secure';
+const JWT_EXPIRY = '7d';
 
 const resolvers = {
   login: async ({ username, password }) => {
@@ -11,7 +11,7 @@ const resolvers = {
       throw new Error('Invalid credentials');
     }
     
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = db.verifyPassword(password, user.password);
     if (!validPassword) {
       throw new Error('Invalid credentials');
     }
@@ -19,7 +19,7 @@ const resolvers = {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: 'admin' },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: JWT_EXPIRY }
     );
     
     return { 
@@ -35,6 +35,18 @@ const resolvers = {
   projects: () => db.getProjects(),
   
   me: ({ user }) => user,
+  
+  regenerateApiKey: ({ user }) => {
+    if (!user) throw new Error('Not authenticated');
+    
+    const newApiKey = db.generateApiKey();
+    db.updateApiKey(newApiKey);
+    
+    return { 
+      apiKey: newApiKey,
+      message: 'API key regenerated successfully'
+    };
+  },
   
   updateProfile: ({ profilePicture, headline, summary, techstack }, { user }) => {
     if (!user) throw new Error('Not authenticated');

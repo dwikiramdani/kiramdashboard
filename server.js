@@ -5,7 +5,6 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcryptjs');
 
 const schema = require('./schema');
 const resolvers = require('./resolvers');
@@ -13,7 +12,8 @@ const db = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = 'kiram-dashboard-secret-key-2024';
+const JWT_SECRET = 'kiram-dashboard-jwt-secret-key-2024-secure';
+const JWT_EXPIRY = '7d';
 
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -36,6 +36,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// JWT Authentication Middleware
 const authenticateToken = (req) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
@@ -49,44 +50,74 @@ const authenticateToken = (req) => {
   }
 };
 
+// API Key Authentication Middleware
+const authenticateApiKey = (req) => {
+  const apiKey = req.headers['x-api-key'];
+  
+  if (!apiKey) return null;
+  
+  const user = db.getUserByApiKey(apiKey);
+  return user ? { id: user.id, username: user.username, role: 'admin' } : null;
+};
+
+// GraphQL endpoint with JWT authentication
 app.use('/graphql', graphqlHTTP((req) => ({
   schema: schema,
   rootValue: resolvers,
   graphiql: true,
   context: {
-    user: authenticateToken(req)
+    user: authenticateToken(req) || authenticateApiKey(req)
   }
 })));
+
+// REST API Authentication Middleware
+const requireAuth = (req, res, next) => {
+  const user = authenticateToken(req) || authenticateApiKey(req);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Unauthorized - Invalid or missing authentication' });
+  }
+  req.user = user;
+  next();
+};
+
+// ==================== AUTH API ====================
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   
   const user = db.getUserByUsername(username);
   if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
   }
   
-  const validPassword = await bcrypt.compare(password, user.password);
+  const validPassword = db.verifyPassword(password, user.password);
   if (!validPassword) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
   }
   
   const token = jwt.sign(
     { id: user.id, username: user.username, role: 'admin' },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: JWT_EXPIRY }
   );
   
-  res.json({ token, user: { id: user.id, username: user.username, role: 'admin' } });
+  res.json({ 
+    success: true, 
+    token, 
+    user: { id: user.id, username: user.username, role: 'admin' },
+    apiKey: user.apiKey
+  });
 });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
+app.post('/api/regenerate-api-key', requireAuth, (req, res) => {
+  const newApiKey = db.generateApiKey();
+  db.updateApiKey(newApiKey);
   
-  const fileUrl = `/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl });
+  res.json({ 
+    success: true, 
+    apiKey: newApiKey,
+    message: 'API key regenerated successfully. Store it securely - it will not be shown again.'
+  });
 });
 
 // ==================== PROFILE API ====================
@@ -94,25 +125,18 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 app.get('/api/profile', (req, res) => {
   try {
     const profile = db.getProfile();
-    res.json({
-      success: true,
-      data: profile
-    });
+    const { password, apiKey, ...safeProfile } = profile;
+    res.json({ success: true, data: safeProfile });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.put('/api/profile', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-
+app.put('/api/profile', requireAuth, (req, res) => {
+  const { profilePicture, headline, summary, techstack } = req.body;
+  
   try {
-    const { profilePicture, headline, summary, techstack } = req.body;
     const currentProfile = db.getProfile();
-    
     const updatedProfile = db.updateProfile({
       ...currentProfile,
       profilePicture: profilePicture || currentProfile.profilePicture,
@@ -120,12 +144,9 @@ app.put('/api/profile', (req, res) => {
       summary: summary || currentProfile.summary,
       techstack: techstack || currentProfile.techstack
     });
-
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      data: updatedProfile
-    });
+    
+    const { password, apiKey, ...safeProfile } = updatedProfile;
+    res.json({ success: true, message: 'Profile updated successfully', data: safeProfile });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -136,11 +157,7 @@ app.put('/api/profile', (req, res) => {
 app.get('/api/experiences', (req, res) => {
   try {
     const experiences = db.getExperiences();
-    res.json({
-      success: true,
-      data: experiences,
-      total: experiences.length
-    });
+    res.json({ success: true, data: experiences, total: experiences.length });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -154,63 +171,44 @@ app.get('/api/experiences/:id', (req, res) => {
     if (!experience) {
       return res.status(404).json({ success: false, error: 'Experience not found' });
     }
-
+    
     res.json({ success: true, data: experience });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/experiences', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+app.post('/api/experiences', requireAuth, (req, res) => {
+  const { title, company, startDate, endDate, description, current } = req.body;
+  
+  if (!title || !company || !startDate) {
+    return res.status(400).json({ success: false, error: 'Title, company, and startDate are required' });
   }
-
+  
   try {
-    const { title, company, startDate, endDate, description, current } = req.body;
-
-    if (!title || !company || !startDate) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Title, company, and startDate are required' 
-      });
-    }
-
     const newExperience = db.addExperience({
-      title,
-      company,
-      startDate,
+      title, company, startDate,
       endDate: current ? null : endDate,
-      description,
-      current: current || false
+      description, current: current || false
     });
-
-    res.status(201).json({
-      success: true,
-      message: 'Experience added successfully',
-      data: newExperience
-    });
+    
+    res.status(201).json({ success: true, message: 'Experience added successfully', data: newExperience });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.put('/api/experiences/:id', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-
+app.put('/api/experiences/:id', requireAuth, (req, res) => {
+  const { title, company, startDate, endDate, description, current } = req.body;
+  
   try {
-    const { title, company, startDate, endDate, description, current } = req.body;
     const experiences = db.getExperiences();
     const experience = experiences.find(e => e.id === req.params.id);
-
+    
     if (!experience) {
       return res.status(404).json({ success: false, error: 'Experience not found' });
     }
-
+    
     const updatedExperience = db.updateExperience(req.params.id, {
       title: title || experience.title,
       company: company || experience.company,
@@ -219,37 +217,24 @@ app.put('/api/experiences/:id', (req, res) => {
       description: description || experience.description,
       current: current !== undefined ? current : experience.current
     });
-
-    res.json({
-      success: true,
-      message: 'Experience updated successfully',
-      data: updatedExperience
-    });
+    
+    res.json({ success: true, message: 'Experience updated successfully', data: updatedExperience });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.delete('/api/experiences/:id', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-
+app.delete('/api/experiences/:id', requireAuth, (req, res) => {
   try {
     const experiences = db.getExperiences();
     const experience = experiences.find(e => e.id === req.params.id);
-
+    
     if (!experience) {
       return res.status(404).json({ success: false, error: 'Experience not found' });
     }
-
+    
     db.deleteExperience(req.params.id);
-
-    res.json({
-      success: true,
-      message: 'Experience deleted successfully'
-    });
+    res.json({ success: true, message: 'Experience deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -260,11 +245,7 @@ app.delete('/api/experiences/:id', (req, res) => {
 app.get('/api/projects', (req, res) => {
   try {
     const projects = db.getProjects();
-    res.json({
-      success: true,
-      data: projects,
-      total: projects.length
-    });
+    res.json({ success: true, data: projects, total: projects.length });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -278,63 +259,46 @@ app.get('/api/projects/:id', (req, res) => {
     if (!project) {
       return res.status(404).json({ success: false, error: 'Project not found' });
     }
-
+    
     res.json({ success: true, data: project });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/projects', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+app.post('/api/projects', requireAuth, (req, res) => {
+  const { title, description, image, technologies, link, github } = req.body;
+  
+  if (!title || !description) {
+    return res.status(400).json({ success: false, error: 'Title and description are required' });
   }
-
+  
   try {
-    const { title, description, image, technologies, link, github } = req.body;
-
-    if (!title || !description) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Title and description are required' 
-      });
-    }
-
     const newProject = db.addProject({
-      title,
-      description,
+      title, description,
       image: image || '/uploads/default-project.png',
       technologies: technologies || [],
       link: link || '',
       github: github || ''
     });
-
-    res.status(201).json({
-      success: true,
-      message: 'Project added successfully',
-      data: newProject
-    });
+    
+    res.status(201).json({ success: true, message: 'Project added successfully', data: newProject });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.put('/api/projects/:id', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-
+app.put('/api/projects/:id', requireAuth, (req, res) => {
+  const { title, description, image, technologies, link, github } = req.body;
+  
   try {
-    const { title, description, image, technologies, link, github } = req.body;
     const projects = db.getProjects();
     const project = projects.find(p => p.id === req.params.id);
-
+    
     if (!project) {
       return res.status(404).json({ success: false, error: 'Project not found' });
     }
-
+    
     const updatedProject = db.updateProject(req.params.id, {
       title: title || project.title,
       description: description || project.description,
@@ -343,40 +307,44 @@ app.put('/api/projects/:id', (req, res) => {
       link: link !== undefined ? link : project.link,
       github: github !== undefined ? github : project.github
     });
-
-    res.json({
-      success: true,
-      message: 'Project updated successfully',
-      data: updatedProject
-    });
+    
+    res.json({ success: true, message: 'Project updated successfully', data: updatedProject });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.delete('/api/projects/:id', (req, res) => {
-  const user = authenticateToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-
+app.delete('/api/projects/:id', requireAuth, (req, res) => {
   try {
     const projects = db.getProjects();
     const project = projects.find(p => p.id === req.params.id);
-
+    
     if (!project) {
       return res.status(404).json({ success: false, error: 'Project not found' });
     }
-
+    
     db.deleteProject(req.params.id);
-
-    res.json({
-      success: true,
-      message: 'Project deleted successfully'
-    });
+    res.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// ==================== UPLOAD API ====================
+
+app.post('/api/upload', requireAuth, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No file uploaded' });
+  }
+  
+  const fileUrl = `/uploads/${req.file.filename}`;
+  res.json({ success: true, url: fileUrl });
+});
+
+// ==================== HEALTH CHECK ====================
+
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
 app.get('*', (req, res) => {
@@ -386,4 +354,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`GraphQL Playground: http://localhost:${PORT}/graphql`);
+  console.log(`Health Check: http://localhost:${PORT}/api/health`);
 });

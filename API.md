@@ -5,361 +5,28 @@
 http://localhost:3000/api
 ```
 
-## Authentication
-All protected endpoints require a JWT token in the Authorization header:
+## Authentication Methods
+
+### 1. JWT Token (Recommended for frontend)
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <JWT_TOKEN>
+```
+
+### 2. API Key (For external services)
+```
+X-Api-Key: <API_KEY>
 ```
 
 ---
 
-## 1. PROFILE API
-
-### Get Profile
-```
-GET /profile
-```
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "1",
-    "profilePicture": "/uploads/default-avatar.png",
-    "headline": "Full Stack Developer",
-    "summary": "Passionate developer with experience in building web applications.",
-    "techstack": ["JavaScript", "React", "Node.js", "GraphQL"]
-  }
-}
-```
-
-### Update Profile
-```
-PUT /profile
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Body:**
-```json
-{
-  "profilePicture": "/uploads/new-avatar.png",
-  "headline": "Senior Developer",
-  "summary": "Updated summary",
-  "techstack": ["React", "Node.js", "TypeScript"]
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Profile updated successfully",
-  "data": {
-    "id": "1",
-    "profilePicture": "/uploads/new-avatar.png",
-    "headline": "Senior Developer",
-    "summary": "Updated summary",
-    "techstack": ["React", "Node.js", "TypeScript"]
-  }
-}
-```
-
----
-
-## 2. WORK EXPERIENCES API
-
-### Get All Experiences
-```
-GET /experiences
-```
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid-1",
-      "title": "Full Stack Developer",
-      "company": "Tech Company",
-      "startDate": "2023-01-15",
-      "endDate": null,
-      "description": "Building web applications",
-      "current": true
-    },
-    {
-      "id": "uuid-2",
-      "title": "Frontend Developer",
-      "company": "Startup Inc",
-      "startDate": "2021-06-01",
-      "endDate": "2022-12-31",
-      "description": "Developed responsive UI",
-      "current": false
-    }
-  ],
-  "total": 2
-}
-```
-
-### Get Single Experience
-```
-GET /experiences/:id
-```
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-1",
-    "title": "Full Stack Developer",
-    "company": "Tech Company",
-    "startDate": "2023-01-15",
-    "endDate": null,
-    "description": "Building web applications",
-    "current": true
-  }
-}
-```
-
-**Response (404):**
-```json
-{
-  "success": false,
-  "error": "Experience not found"
-}
-```
-
-### Create Experience
-```
-POST /experiences
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Body:**
-```json
-{
-  "title": "Software Engineer",
-  "company": "Big Tech Corp",
-  "startDate": "2024-01-01",
-  "endDate": "2024-12-31",
-  "description": "Working on cloud services",
-  "current": false
-}
-```
-
-**Response (201):**
-```json
-{
-  "success": true,
-  "message": "Experience added successfully",
-  "data": {
-    "id": "uuid-new",
-    "title": "Software Engineer",
-    "company": "Big Tech Corp",
-    "startDate": "2024-01-01",
-    "endDate": "2024-12-31",
-    "description": "Working on cloud services",
-    "current": false
-  }
-}
-```
-
-### Update Experience
-```
-PUT /experiences/:id
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Body:**
-```json
-{
-  "title": "Senior Software Engineer",
-  "description": "Updated description"
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Experience updated successfully",
-  "data": {
-    "id": "uuid-1",
-    "title": "Senior Software Engineer",
-    "company": "Big Tech Corp",
-    "startDate": "2024-01-01",
-    "endDate": "2024-12-31",
-    "description": "Updated description",
-    "current": false
-  }
-}
-```
-
-### Delete Experience
-```
-DELETE /experiences/:id
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Experience deleted successfully"
-}
-```
-
----
-
-## 3. PROJECTS API
-
-### Get All Projects
-```
-GET /projects
-```
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid-1",
-      "title": "Portfolio Website",
-      "description": "Personal portfolio with admin dashboard",
-      "image": "/uploads/project1.png",
-      "technologies": ["React", "Node.js", "GraphQL"],
-      "link": "https://myportfolio.com",
-      "github": "https://github.com/user/portfolio"
-    }
-  ],
-  "total": 1
-}
-```
-
-### Get Single Project
-```
-GET /projects/:id
-```
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-1",
-    "title": "Portfolio Website",
-    "description": "Personal portfolio with admin dashboard",
-    "image": "/uploads/project1.png",
-    "technologies": ["React", "Node.js", "GraphQL"],
-    "link": "https://myportfolio.com",
-    "github": "https://github.com/user/portfolio"
-  }
-}
-```
-
-**Response (404):**
-```json
-{
-  "success": false,
-  "error": "Project not found"
-}
-```
-
-### Create Project
-```
-POST /projects
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Body:**
-```json
-{
-  "title": "E-commerce Platform",
-  "description": "Full-featured e-commerce solution",
-  "image": "/uploads/ecommerce.png",
-  "technologies": ["React", "Node.js", "MongoDB", "Stripe"],
-  "link": "https://myshop.com",
-  "github": "https://github.com/user/ecommerce"
-}
-```
-
-**Response (201):**
-```json
-{
-  "success": true,
-  "message": "Project added successfully",
-  "data": {
-    "id": "uuid-new",
-    "title": "E-commerce Platform",
-    "description": "Full-featured e-commerce solution",
-    "image": "/uploads/ecommerce.png",
-    "technologies": ["React", "Node.js", "MongoDB", "Stripe"],
-    "link": "https://myshop.com",
-    "github": "https://github.com/user/ecommerce"
-  }
-}
-```
-
-### Update Project
-```
-PUT /projects/:id
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Body:**
-```json
-{
-  "title": "Updated Project Title",
-  "link": "https://new-link.com"
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Project updated successfully",
-  "data": {
-    "id": "uuid-1",
-    "title": "Updated Project Title",
-    "description": "Full-featured e-commerce solution",
-    "image": "/uploads/ecommerce.png",
-    "technologies": ["React", "Node.js", "MongoDB", "Stripe"],
-    "link": "https://new-link.com",
-    "github": "https://github.com/user/ecommerce"
-  }
-}
-```
-
-### Delete Project
-```
-DELETE /projects/:id
-```
-**Headers:**
-- Authorization: Bearer <token>
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Project deleted successfully"
-}
-```
-
----
-
-## 4. AUTH API
+## 1. AUTH API
 
 ### Login
 ```
 POST /login
 ```
 
-**Body:**
+**Request Body:**
 ```json
 {
   "username": "dwikiramdaniganteng",
@@ -370,21 +37,175 @@ POST /login
 **Response (200):**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
   "user": {
     "id": "1",
     "username": "dwikiramdaniganteng",
     "role": "admin"
+  },
+  "apiKey": "kir_abc123..."
+}
+```
+
+### Regenerate API Key
+```
+POST /regenerate-api-key
+```
+**Authentication Required:** Bearer Token or API Key
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "apiKey": "kir_newkey456...",
+  "message": "API key regenerated successfully..."
+}
+```
+
+---
+
+## 2. PROFILE API
+
+### Get Profile
+```
+GET /profile
+```
+**Authentication Required:** None (public data only)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "1",
+    "username": "dwikiramdaniganteng",
+    "profilePicture": "/uploads/default-avatar.png",
+    "headline": "Full Stack Developer",
+    "summary": "Passionate developer...",
+    "techstack": ["JavaScript", "React", "Node.js"]
   }
 }
 ```
 
-**Response (401):**
+### Update Profile
+```
+PUT /profile
+```
+**Authentication Required:** Yes
+
+**Headers:**
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+or
+```
+X-Api-Key: <API_KEY>
+```
+
+**Request Body:**
 ```json
 {
-  "error": "Invalid credentials"
+  "profilePicture": "/uploads/new-avatar.png",
+  "headline": "Senior Developer",
+  "summary": "Updated summary",
+  "techstack": ["React", "Node.js", "TypeScript"]
 }
 ```
+
+---
+
+## 3. WORK EXPERIENCES API
+
+### Get All Experiences
+```
+GET /experiences
+```
+**Authentication Required:** No
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [...],
+  "total": 2
+}
+```
+
+### Get Single Experience
+```
+GET /experiences/:id
+```
+
+### Create Experience
+```
+POST /experiences
+```
+**Authentication Required:** Yes
+
+**Request Body:**
+```json
+{
+  "title": "Software Engineer",
+  "company": "Tech Corp",
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "description": "Working on cloud services",
+  "current": false
+}
+```
+
+### Update Experience
+```
+PUT /experiences/:id
+```
+**Authentication Required:** Yes
+
+### Delete Experience
+```
+DELETE /experiences/:id
+```
+**Authentication Required:** Yes
+
+---
+
+## 4. PROJECTS API
+
+### Get All Projects
+```
+GET /projects
+```
+**Authentication Required:** No
+
+### Create Project
+```
+POST /projects
+```
+**Authentication Required:** Yes
+
+**Request Body:**
+```json
+{
+  "title": "E-commerce Platform",
+  "description": "Full-featured e-commerce solution",
+  "image": "/uploads/project.png",
+  "technologies": ["React", "Node.js", "MongoDB"],
+  "link": "https://myshop.com",
+  "github": "https://github.com/user/ecommerce"
+}
+```
+
+### Update Project
+```
+PUT /projects/:id
+```
+**Authentication Required:** Yes
+
+### Delete Project
+```
+DELETE /projects/:id
+```
+**Authentication Required:** Yes
 
 ---
 
@@ -394,6 +215,13 @@ POST /login
 ```
 POST /upload
 ```
+**Authentication Required:** Yes
+
+**Headers:**
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
 **Content-Type:** multipart/form-data
 
 **Body:** form-data with file field named "file"
@@ -401,16 +229,48 @@ POST /upload
 **Response (200):**
 ```json
 {
+  "success": true,
   "url": "/uploads/filename-123.png"
 }
 ```
 
-**Response (400):**
+---
+
+## 6. HEALTH CHECK
+
+### Server Health
+```
+GET /health
+```
+
+**Response (200):**
 ```json
 {
-  "error": "No file uploaded"
+  "success": true,
+  "message": "Server is running",
+  "timestamp": "2024-01-31T12:00:00.000Z"
 }
 ```
+
+---
+
+## SECURITY FEATURES
+
+### Password Hashing
+- Algorithm: PBKDF2 with SHA512
+- Iterations: 100,000
+- Salt: 16 bytes (randomly generated)
+- Key length: 64 bytes
+
+### JWT Token
+- Algorithm: HS256
+- Expiry: 7 days
+- Payload: { id, username, role }
+
+### API Key
+- Format: `kir_<32-character-hex-string>`
+- Secure random generation using crypto.randomBytes(32)
+- Can be regenerated via dashboard or API
 
 ---
 
@@ -420,7 +280,15 @@ POST /upload
 ```json
 {
   "success": false,
-  "error": "Unauthorized"
+  "error": "Unauthorized - Invalid or missing authentication"
+}
+```
+
+### Forbidden (403)
+```json
+{
+  "success": false,
+  "error": "Forbidden"
 }
 ```
 
@@ -450,6 +318,65 @@ POST /upload
 
 ---
 
+## TESTING WITH CURL
+
+### Login
+```bash
+curl -X POST http://localhost:3000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"dwikiramdaniganteng","password":"g4nt3ng$b4ng3t"}'
+```
+
+### Get Profile (with JWT)
+```bash
+curl http://localhost:3000/api/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Get Profile (with API Key)
+```bash
+curl http://localhost:3000/api/profile \
+  -H "X-Api-Key: kir_your_api_key"
+```
+
+### Create Experience (with JWT)
+```bash
+curl -X POST http://localhost:3000/api/experiences \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Developer","company":"ABC","startDate":"2024-01-01"}'
+```
+
+### Upload Image (with JWT)
+```bash
+curl -X POST http://localhost:3000/api/upload \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@image.png"
+```
+
+---
+
+## EXAMPLE USAGE IN JAVASCRIPT
+
+```javascript
+const API_BASE = 'https://your-domain.com/api';
+
+// Login
+const loginResponse = await fetch(`${API_BASE}/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username, password })
+});
+const { token, apiKey } = await loginResponse.json();
+
+// Use API Key for external requests
+const profileResponse = await fetch(`${API_BASE}/profile`, {
+  headers: { 'X-Api-Key': apiKey }
+});
+```
+
+---
+
 ## CORS ENABLED
 
 All API endpoints support CORS for cross-origin requests.
@@ -459,35 +386,3 @@ All API endpoints support CORS for cross-origin requests.
 ## RATE LIMITING
 
 No rate limiting is implemented by default. Consider adding rate limiting for production use.
-
----
-
-## TESTING WITH CURL
-
-### Get Profile
-```bash
-curl http://localhost:3000/api/profile
-```
-
-### Get Experiences (with auth)
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:3000/api/experiences
-```
-
-### Create Experience
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Developer","company":"ABC","startDate":"2024-01-01"}' \
-  http://localhost:3000/api/experiences
-```
-
-### Upload Image
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@image.png" \
-  http://localhost:3000/api/upload
-```
