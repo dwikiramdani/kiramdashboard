@@ -9,27 +9,28 @@ async function setup() {
   const hashedPassword = await bcrypt.hash(password, 10);
   
   const defaultDb = {
-    users: [{
-      id: '1',
-      username: 'dwikiramdaniganteng',
-      password: hashedPassword,
-      role: 'admin'
-    }],
-    profile: {
-      id: '1',
-      profilePicture: '/uploads/default-avatar.png',
-      headline: 'Full Stack Developer',
-      summary: 'Passionate developer with experience in building web applications.',
-      techstack: ['JavaScript', 'React', 'Node.js', 'GraphQL']
-    },
+    profiles: [
+      {
+        id: '1',
+        username: 'dwikiramdaniganteng',
+        password: hashedPassword,
+        profilePicture: '/uploads/default-avatar.png',
+        headline: 'Full Stack Developer',
+        summary: 'Passionate developer with experience in building web applications.',
+        techstack: ['JavaScript', 'React', 'Node.js', 'GraphQL']
+      }
+    ],
     experiences: [],
     projects: []
   };
   
   fs.writeFileSync(dbPath, JSON.stringify(defaultDb, null, 2));
-  console.log('Database initialized with default user.');
+  console.log('Database initialized successfully!');
+  console.log('=================================');
+  console.log('LOGIN CREDENTIALS:');
   console.log('Username: dwikiramdaniganteng');
   console.log('Password: g4nt3ng$b4ng3t');
+  console.log('=================================');
 }
 
 setup().catch(console.error);

@@ -3,6 +3,8 @@ const { buildSchema } = require('graphql');
 const schema = buildSchema(`
   type Profile {
     id: ID!
+    username: String!
+    password: String!
     profilePicture: String!
     headline: String!
     summary: String!

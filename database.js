@@ -1,16 +1,34 @@
-const Lowdb = require('lowdb');
+const lowdb = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const { v4: uuidv4 } = require('uuid');
 
 const adapter = new FileSync('db.json');
-const db = new Lowdb(adapter);
+const db = lowdb(adapter);
+
+db.defaults({
+  profiles: [
+    {
+      id: '1',
+      username: 'dwikiramdaniganteng',
+      password: '$2a$10$rQZ3fK4g7k8k7k8k7k8k7uLxXsXsXsXsXsXsXsXsXsXsXsXsXsXsX',
+      profilePicture: '/uploads/default-avatar.png',
+      headline: 'Full Stack Developer',
+      summary: 'Passionate developer with experience in building web applications.',
+      techstack: ['JavaScript', 'React', 'Node.js', 'GraphQL']
+    }
+  ],
+  experiences: [],
+  projects: []
+}).write();
 
 module.exports = {
-  getUser: (username) => db.get('users').find({ username }).value(),
-  getProfile: () => db.get('profile').value(),
+  getProfile: () => db.get('profiles').first() || db.get('profiles')[0],
+  getUserByUsername: (username) => db.get('profiles').find({ username }).value(),
   updateProfile: (data) => {
-    db.get('profile').assign(data).write();
-    return db.get('profile').value();
+    const currentProfile = db.get('profiles').first();
+    const updatedProfile = { ...currentProfile, ...data };
+    db.get('profiles').first().assign(updatedProfile).write();
+    return updatedProfile;
   },
   getExperiences: () => db.get('experiences').value(),
   addExperience: (experience) => {

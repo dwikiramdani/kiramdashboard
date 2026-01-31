@@ -61,7 +61,7 @@ app.use('/graphql', graphqlHTTP((req) => ({
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   
-  const user = db.getUser(username);
+  const user = db.getUserByUsername(username);
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -72,12 +72,12 @@ app.post('/api/login', async (req, res) => {
   }
   
   const token = jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
+    { id: user.id, username: user.username, role: 'admin' },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '7d' }
   );
   
-  res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  res.json({ token, user: { id: user.id, username: user.username, role: 'admin' } });
 });
 
 app.post('/api/upload', upload.single('file'), (req, res) => {

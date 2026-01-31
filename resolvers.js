@@ -2,11 +2,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./database');
 
-const JWT_SECRET = 'kiram-dashboard-secret-key-2024';
+const JWT_SECRET = 'kiram-dashboard-jwt-secret-key-2024';
 
 const resolvers = {
   login: async ({ username, password }) => {
-    const user = db.getUser(username);
+    const user = db.getUserByUsername(username);
     if (!user) {
       throw new Error('Invalid credentials');
     }
@@ -17,12 +17,15 @@ const resolvers = {
     }
     
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, username: user.username, role: 'admin' },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
     
-    return { token, user: { id: user.id, username: user.username, role: user.role } };
+    return { 
+      token, 
+      user: { id: user.id, username: user.username, role: 'admin' } 
+    };
   },
   
   profile: () => db.getProfile(),
