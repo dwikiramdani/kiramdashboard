@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Portfolio Dashboard with GraphQL API",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
+"scripts": {
+  "start": "node setup.js && node server.js",
+  "dev": "node server.js",
+  "setup": "node setup.js"
+},
   "dependencies": {
     "express": "^4.18.2",
     "express-graphql": "^0.12.0",
